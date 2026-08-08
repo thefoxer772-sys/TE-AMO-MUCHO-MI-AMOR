@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Words — Reproductor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,600&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold: #e6bd7a;
+    --blush: #ff9fb8;
+    --lilac: #d9c4ff;
+    --glass: rgba(255,255,255,0.08);
+    --glass-border: rgba(255,255,255,0.28);
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0;
+    min-height:100%;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,143,177,0.22), transparent 42%),
+      radial-gradient(circle at 88% 15%, rgba(217,196,255,0.20), transparent 46%),
+      radial-gradient(circle at 50% 100%, rgba(230,189,122,0.12), transparent 50%),
+      linear-gradient(160deg, #0d0714 0%, #1c0e28 45%, #0d0714 100%);
+    font-family:'Poppins', sans-serif;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+  }
+
+  .sky{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .star{
+    position:absolute;
+    border-radius:50%;
+    background:#fff;
+    box-shadow: 0 0 6px 1px rgba(255,255,255,0.8);
+    animation: twinkle ease-in-out infinite;
+  }
+  @keyframes twinkle{
+    0%, 100%{ opacity:0.15; transform:scale(0.7); }
+    50%{ opacity:1; transform:scale(1.15); }
+  }
+
+  .spark{
+    position:absolute;
+    width:3px;
+    height:3px;
+    border-radius:50%;
+    background: var(--gold);
+    box-shadow: 0 0 8px 2px rgba(230,189,122,0.9);
+    opacity:0;
+  }
+  .spark.blush{ background: var(--blush); box-shadow: 0 0 8px 2px rgba(255,159,184,0.9); }
+  .spark.lilac{ background: var(--lilac); box-shadow: 0 0 8px 2px rgba(217,196,255,0.9); }
+
+  @keyframes driftA{
+    0%{ transform: translate(0,0); opacity:0; }
+    10%{ opacity:1; }
+    90%{ opacity:0.7; }
+    100%{ transform: translate(220px,-180px); opacity:0; }
+  }
+  @keyframes driftB{
+    0%{ transform: translate(0,0); opacity:0; }
+    10%{ opacity:1; }
+    90%{ opacity:0.7; }
+    100%{ transform: translate(-200px,-160px); opacity:0; }
+  }
+  @keyframes driftC{
+    0%{ transform: translate(0,0); opacity:0; }
+    10%{ opacity:1; }
+    90%{ opacity:0.7; }
+    100%{ transform: translate(160px,200px); opacity:0; }
+  }
+  @keyframes driftD{
+    0%{ transform: translate(0,0); opacity:0; }
+    10%{ opacity:1; }
+    90%{ opacity:0.7; }
+    100%{ transform: translate(-180px,190px); opacity:0; }
+  }
+
+  .stage-outer{
+    position:relative;
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:2;
+  }
+
+  .stage{
+    position:relative;
+    width: 820px;
+    height: 500px;
+    transform: scale(1);
+    transform-origin:center center;
+  }
+
+  .player-card{
+    position:absolute;
+    inset:0;
+    border-radius: 28px;
+    padding: 12px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+      0 12px 44px rgba(0,0,0,0.55),
+      inset 0 1px 0 rgba(255,255,255,0.32),
+      0 0 80px rgba(255,143,177,0.18);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    z-index:5;
+  }
+
+  /* el mask-image fuerza al navegador a recortar correctamente el video
+     incluso cuando usa una capa de video acelerada por hardware, que a
+     veces ignora el overflow:hidden normal en las esquinas redondeadas */
+  .video-wrap{
+    position:relative;
+    flex:1;
+    border-radius: 18px;
+    overflow:hidden;
+    background:#0a0510;
+    -webkit-mask-image: -webkit-radial-gradient(circle, #fff 100%, #000 100%);
+    mask-image: radial-gradient(circle, #fff 100%, #000 100%);
+  }
+
+  video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    background:#0a0510;
+    border-radius: 18px;
+  }
+
+  .fallback{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding: 20px;
+    color: rgba(255,255,255,0.55);
+    font-size:12px;
+    line-height:1.5;
+  }
+
+  .caption{
+    text-align:center;
+    color:#fff;
+    font-size: clamp(12.5px, 1.6vw, 15px);
+    letter-spacing:1px;
+    opacity:0.9;
+    font-weight:500;
+    padding: 0 12px;
+  }
+  .caption span{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    letter-spacing:0.5px;
+    color: var(--gold);
+    font-weight:600;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .star, .spark{ animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sky" id="sky"></div>
+
+<div class="stage-outer">
+<div class="stage">
+
+  <div class="player-card">
+    <div class="video-wrap">
+      <video id="mainVideo" controls autoplay loop playsinline>
+        <source src="words_fr_david.mp4" type="video/mp4">
+        Tu navegador no soporta el elemento de video.
+      </video>
+      <div class="fallback" id="fallbackMsg" style="display:none;">
+        No se pudo cargar el video.<br>Asegúrate de que "words_fr_david.mp4" esté en la misma carpeta que este archivo HTML.
+      </div>
+    </div>
+    <div class="caption">Prometo amarte para toda la eternidad <span>y con todo el corazón</span></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+  const stageEl = document.querySelector('.stage');
+  function fitStage(){
+    const maxW = window.innerWidth * 0.94;
+    const maxH = window.innerHeight * 0.9;
+    const scale = Math.min(1, maxW / 820, maxH / 500);
+    stageEl.style.transform = 'scale(' + scale + ')';
+  }
+  fitStage();
+  window.addEventListener('resize', fitStage);
+
+  const v = document.getElementById('mainVideo');
+  const fb = document.getElementById('fallbackMsg');
+  v.volume = 0.5;
+  v.addEventListener('error', () => { fb.style.display = 'flex'; });
+
+  v.play().catch(() => {
+    v.muted = true;
+    v.play();
+  });
+  v.addEventListener('click', () => {
+    if (v.muted){ v.muted = false; v.volume = 0.5; }
+  });
+
+  const sky = document.getElementById('sky');
+  const starCount = 90;
+  for(let i=0;i<starCount;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = (Math.random()*2 + 1).toFixed(1);
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.left = (Math.random()*100) + '%';
+    s.style.top = (Math.random()*100) + '%';
+    s.style.animationDuration = (2 + Math.random()*4) + 's';
+    s.style.animationDelay = (Math.random()*5) + 's';
+    sky.appendChild(s);
+  }
+
+  const driftAnims = ['driftA','driftB','driftC','driftD'];
+  const tones = ['', 'blush', 'lilac'];
+  const sparkCount = 26;
+  for(let i=0;i<sparkCount;i++){
+    const sp = document.createElement('div');
+    const tone = tones[Math.floor(Math.random()*tones.length)];
+    sp.className = 'spark' + (tone ? ' ' + tone : '');
+    sp.style.left = (Math.random()*100) + '%';
+    sp.style.top = (Math.random()*100) + '%';
+    const anim = driftAnims[Math.floor(Math.random()*driftAnims.length)];
+    const dur = (6 + Math.random()*8).toFixed(1);
+    sp.style.animation = anim + ' ' + dur + 's ease-in-out infinite';
+    sp.style.animationDelay = (Math.random()*10) + 's';
+    sky.appendChild(sp);
+  }
+</script>
+
+</body>
+</html>
